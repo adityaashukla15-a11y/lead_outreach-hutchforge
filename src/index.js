@@ -16,11 +16,43 @@ async function main() {
   const location = process.env.LOCATION || 'Dallas, TX';
   const batchSize = parseInt(process.env.BATCH_SIZE || '20', 10);
   const dryRun = process.env.DRY_RUN === 'true' || process.argv.includes('--dry-run');
+  const testEmail = process.env.TEST_EMAIL;
 
   console.log(`[Config] Sender: ${titanEmail}`);
   console.log(`[Config] Target Location: ${location}`);
   console.log(`[Config] Batch Size: ${batchSize}`);
   console.log(`[Config] Dry Run Mode: ${dryRun ? 'ENABLED (No emails will actually be sent)' : 'DISABLED (Live sending)'}`);
+
+  // Test Mode: Send a single verification email to a specific address
+  if (testEmail) {
+    console.log(`\n====================================================`);
+    console.log(`[TEST MODE] Sending single verification email to: ${testEmail}`);
+    console.log(`====================================================\n`);
+
+    if (!titanPass && !dryRun) {
+      console.error(`[Error] TITAN_PASSWORD environment variable is missing!`);
+      process.exit(1);
+    }
+
+    const testLead = {
+      name: 'Vyvhr Construction',
+      city: 'Dallas, TX',
+      email: testEmail.trim(),
+      phone: '+1 (555) 019-2834',
+      website: 'None'
+    };
+
+    const transporter = dryRun ? null : createTitanTransporter(titanEmail, titanPass);
+    const result = await sendOutreachEmail(transporter, titanEmail, testLead, dryRun);
+
+    if (result.success) {
+      console.log(`[SUCCESS] Test email successfully delivered to ${testEmail}! Check your inbox.`);
+      recordLead(testLead, 'TEST_SENT');
+    } else {
+      console.error(`[FAILED] Test email failed: ${result.error}`);
+    }
+    return;
+  }
 
   // 1. Check deduplication database
   const previouslyContacted = getContactedEmails();

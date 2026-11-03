@@ -19,6 +19,11 @@ on:
         type: string
         required: true
         default: '20'
+      test_email:
+        description: 'Verification Mode: Send 1 test email directly to this address (leave empty for normal scraping)'
+        type: string
+        required: false
+        default: 'contact@vyvhr.com'
 
   # 2. Automated schedule: Runs Monday to Friday at 14:00 UTC (9:00 AM US Central / 7:30 PM IST)
   schedule:
@@ -51,6 +56,7 @@ jobs:
           LOCATION: ${{ github.event.inputs.location || 'Dallas, TX' }}
           BATCH_SIZE: ${{ github.event.inputs.batch_size || '20' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          TEST_EMAIL: ${{ github.event.inputs.test_email }}
         run: node src/index.js
 
       - name: Commit & Save Updated Contact History

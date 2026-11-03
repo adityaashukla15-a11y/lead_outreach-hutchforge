@@ -1,0 +1,61 @@
+name: Hutchforge Lead Outreach Pipeline
+
+on:
+  # 1. Manual trigger with custom parameters from GitHub website
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry Run (Preview only, no live emails sent)'
+        type: boolean
+        required: true
+        default: false
+      location:
+        description: 'Target Location (City, State)'
+        type: string
+        required: true
+        default: 'Dallas, TX'
+      batch_size:
+        description: 'Number of leads to contact in this run'
+        type: string
+        required: true
+        default: '20'
+
+  # 2. Automated schedule: Runs Monday to Friday at 14:00 UTC (9:00 AM US Central / 7:30 PM IST)
+  schedule:
+    - cron: '0 14 * * 1-5'
+
+permissions:
+  contents: write # Needed to commit updated leads_history.csv back to the repo
+
+jobs:
+  run-outreach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Lead Discovery & Email Dispatch
+        env:
+          TITAN_EMAIL: ${{ secrets.TITAN_EMAIL || 'hello@hutchforge.in' }}
+          TITAN_PASSWORD: ${{ secrets.TITAN_PASSWORD }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          LOCATION: ${{ github.event.inputs.location || 'Dallas, TX' }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size || '20' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node src/index.js
+
+      - name: Commit & Save Updated Contact History
+        run: |
+          git config --global user.name "Hutchforge Bot"
+          git config --global user.email "bot@hutchforge.in"
+          git add leads_history.csv
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update leads contact history [skip ci]" && git push)
