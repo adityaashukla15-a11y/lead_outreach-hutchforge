@@ -34,6 +34,8 @@ const DEFAULT_SETTINGS = {
   apifyToken: process.env.APIFY_TOKEN || "",
   titanEmail: process.env.TITAN_EMAIL || "hello@hutchforge.in",
   titanPassword: process.env.TITAN_PASSWORD || "",
+  smtpHost: "smtp.titan.email",
+  smtpPort: 587,
   senderName: "Team Hutchforge",
   niche: "Builders & Construction Contractors",
   location: "Dallas, TX",

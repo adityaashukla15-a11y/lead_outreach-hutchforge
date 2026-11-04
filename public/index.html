@@ -286,6 +286,20 @@
               <input type="email" id="setting-titan-email" class="input-control" placeholder="hello@hutchforge.in">
             </div>
 
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label>SMTP Host Server:</label>
+                <input type="text" id="setting-smtp-host" class="input-control" value="smtp.titan.email" placeholder="smtp.titan.email">
+              </div>
+              <div class="form-group">
+                <label>Port:</label>
+                <select id="setting-smtp-port" class="input-control">
+                  <option value="587">587 (STARTTLS)</option>
+                  <option value="465">465 (SSL)</option>
+                </select>
+              </div>
+            </div>
+
             <div class="form-group">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <label style="margin-bottom: 0;">Titan Password:</label>

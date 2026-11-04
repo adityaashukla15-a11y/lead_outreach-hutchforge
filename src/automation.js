@@ -74,7 +74,9 @@ export async function runOutreachCycle({ manual = false, scrapeOnly = false, sen
     }
 
     addLog(`Preparing to email ${pendingLeads.length} leads with ${settings.delaySeconds || 40}s delay...`, "INFO");
-    const transporter = createTitanTransporter(settings.titanEmail, settings.titanPassword);
+    const host = settings.smtpHost || 'smtp.titan.email';
+    const port = parseInt(settings.smtpPort || '587', 10);
+    const transporter = createTitanTransporter(settings.titanEmail, settings.titanPassword, port, host);
 
     let sentCount = 0;
     for (let i = 0; i < pendingLeads.length; i++) {

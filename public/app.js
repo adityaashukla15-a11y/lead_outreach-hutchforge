@@ -81,6 +81,10 @@ async function loadSettings() {
     // Fill form
     document.getElementById('setting-sender-name').value = s.senderName || 'Team Hutchforge';
     document.getElementById('setting-titan-email').value = s.titanEmail || 'hello@hutchforge.in';
+    const hostEl = document.getElementById('setting-smtp-host');
+    if (hostEl) hostEl.value = s.smtpHost || 'smtp.titan.email';
+    const portEl = document.getElementById('setting-smtp-port');
+    if (portEl) portEl.value = s.smtpPort ? s.smtpPort.toString() : '587';
     
     // Only update password placeholder/badge, NEVER touch what user is typing
     const passInput = document.getElementById('setting-titan-password');
@@ -144,6 +148,8 @@ document.getElementById('btn-save-settings').addEventListener('click', async () 
   const payload = {
     senderName: document.getElementById('setting-sender-name').value,
     titanEmail: document.getElementById('setting-titan-email').value,
+    smtpHost: (document.getElementById('setting-smtp-host') ? document.getElementById('setting-smtp-host').value : 'smtp.titan.email'),
+    smtpPort: parseInt((document.getElementById('setting-smtp-port') ? document.getElementById('setting-smtp-port').value : '587'), 10),
     titanPassword: document.getElementById('setting-titan-password').value,
     testEmail: document.getElementById('setting-test-email').value,
     apifyToken: document.getElementById('setting-apify-token').value,

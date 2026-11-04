@@ -128,8 +128,11 @@ app.post('/api/test-email', async (req, res) => {
     phone: "+1 (555) 019-2834"
   };
 
+  const host = db.settings.smtpHost || 'smtp.titan.email';
+  const port = parseInt(db.settings.smtpPort || '587', 10);
+
   try {
-    let transporter = createTitanTransporter(titanEmail, titanPassword, 587);
+    let transporter = createTitanTransporter(titanEmail, titanPassword, port, host);
     let result = await sendOutreachEmail({
       transporter,
       fromEmail: titanEmail,
@@ -140,10 +143,11 @@ app.post('/api/test-email', async (req, res) => {
       dryRun: false
     });
 
-    // If port 587 fails with timeout, auto-fallback to port 465
+    // If initial port fails with timeout, auto-fallback to alternative port (465 <-> 587)
     if (!result.success && result.error && result.error.toLowerCase().includes('timeout')) {
-      addLog("Port 587 timed out, retrying on port 465...", "WARNING");
-      transporter = createTitanTransporter(titanEmail, titanPassword, 465);
+      const fallbackPort = port === 587 ? 465 : 587;
+      addLog(`Port ${port} timed out, retrying on port ${fallbackPort}...`, "WARNING");
+      transporter = createTitanTransporter(titanEmail, titanPassword, fallbackPort, host);
       result = await sendOutreachEmail({
         transporter,
         fromEmail: titanEmail,
