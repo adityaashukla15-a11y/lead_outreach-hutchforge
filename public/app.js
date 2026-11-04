@@ -15,7 +15,7 @@ function showToast(message, type = 'info') {
 }
 
 // Tab Switching
-document.querySelectorAll('.nav-item').forEach(button => {
+document.querySelectorAll('.nav-item, .top-nav-btn').forEach(button => {
   button.addEventListener('click', () => {
     const tabName = button.getAttribute('data-tab');
     switchTab(tabName);
@@ -30,12 +30,13 @@ document.querySelectorAll('[data-tab-link]').forEach(el => {
 });
 
 function switchTab(tabName) {
-  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .top-nav-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
 
-  const activeBtn = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+  document.querySelectorAll(`.nav-item[data-tab="${tabName}"], .top-nav-btn[data-tab="${tabName}"]`).forEach(btn => {
+    btn.classList.add('active');
+  });
   const activePane = document.getElementById(`tab-${tabName}`);
-  if (activeBtn) activeBtn.classList.add('active');
   if (activePane) activePane.classList.add('active');
 
   if (tabName === 'leads') loadLeads();
@@ -53,6 +54,8 @@ async function loadStatus() {
     document.getElementById('stat-sent-leads').textContent = data.sentLeads;
     document.getElementById('stat-failed-leads').textContent = data.failedLeads;
     document.getElementById('sidebar-lead-count').textContent = data.totalLeads;
+    const topCount = document.getElementById('top-lead-count');
+    if (topCount) topCount.textContent = data.totalLeads;
 
     // Scheduler pill
     const pill = document.getElementById('scheduler-pill');

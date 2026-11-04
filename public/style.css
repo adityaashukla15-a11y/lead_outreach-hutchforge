@@ -156,6 +156,44 @@ body {
   position: relative;
 }
 
+/* Top Navigation Bar */
+.top-nav-bar {
+  display: flex;
+  gap: 8px;
+  background-color: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  padding: 8px;
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.top-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.top-nav-btn:hover {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+}
+
+.top-nav-btn.active {
+  background-color: var(--primary);
+  color: #fff;
+}
+
 .toast-banner {
   padding: 12px 20px;
   border-radius: var(--radius);

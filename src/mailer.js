@@ -4,7 +4,7 @@ import nodemailer from 'nodemailer';
  * Creates the Titan SMTP transporter
  */
 export function createTitanTransporter(user, pass) {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: 'smtp.titan.email',
     port: 465,
     secure: true, // SSL
