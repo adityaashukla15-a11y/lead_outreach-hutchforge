@@ -34,9 +34,9 @@ app.get('/api/status', (req, res) => {
 app.get('/api/settings', (req, res) => {
   const db = readDb();
   const safeSettings = { ...db.settings };
-  // Mask password for display
-  safeSettings.hasPassword = !!safeSettings.titanPassword;
-  safeSettings.titanPassword = safeSettings.titanPassword ? "••••••••" : "";
+  safeSettings.hasPassword = !!(db.settings.titanPassword && db.settings.titanPassword.trim().length > 0);
+  // Never send fake bullet characters so the user's input is never modified or visually shortened
+  delete safeSettings.titanPassword;
   res.json(safeSettings);
 });
 
@@ -44,10 +44,11 @@ app.post('/api/settings', (req, res) => {
   const db = readDb();
   const incoming = req.body;
 
-  // Preserve existing password if user didn't change masked string
-  if (incoming.titanPassword === "••••••••" || !incoming.titanPassword) {
-    incoming.titanPassword = db.settings.titanPassword;
+  // Only update password if user actually typed a new one
+  if (incoming.titanPassword && incoming.titanPassword.trim().length > 0) {
+    db.settings.titanPassword = incoming.titanPassword.trim();
   }
+  delete incoming.titanPassword;
 
   db.settings = { ...db.settings, ...incoming };
   writeDb(db);

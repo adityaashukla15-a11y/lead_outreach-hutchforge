@@ -287,9 +287,15 @@
             </div>
 
             <div class="form-group">
-              <label>Titan Password:</label>
-              <input type="password" id="setting-titan-password" class="input-control" placeholder="Enter your mailbox password">
-              <small class="field-hint">Never exposed publicly. Kept secure on your private server.</small>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="margin-bottom: 0;">Titan Password:</label>
+                <span id="password-status-badge" class="badge badge-warning">Not Set</span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="password" id="setting-titan-password" class="input-control" placeholder="Enter your mailbox password">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-password" style="white-space: nowrap;">Show</button>
+              </div>
+              <small class="field-hint" id="password-hint">Enter your Titan mailbox password once. It is securely saved on your server.</small>
             </div>
 
             <div class="form-group" style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);">

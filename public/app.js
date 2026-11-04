@@ -81,7 +81,33 @@ async function loadSettings() {
     // Fill form
     document.getElementById('setting-sender-name').value = s.senderName || 'Team Hutchforge';
     document.getElementById('setting-titan-email').value = s.titanEmail || 'hello@hutchforge.in';
-    document.getElementById('setting-titan-password').value = s.titanPassword || '';
+    
+    // Only update password placeholder/badge, NEVER touch what user is typing
+    const passInput = document.getElementById('setting-titan-password');
+    const passBadge = document.getElementById('password-status-badge');
+    const passHint = document.getElementById('password-hint');
+
+    if (s.hasPassword) {
+      if (passBadge) {
+        passBadge.className = 'badge badge-success';
+        passBadge.textContent = 'Saved in Storage';
+      }
+      if (passInput && !passInput.value) {
+        passInput.placeholder = 'Password saved. (Type only to replace)';
+      }
+      if (passHint) {
+        passHint.textContent = 'Your Titan mailbox password is saved and active on your server.';
+      }
+    } else {
+      if (passBadge) {
+        passBadge.className = 'badge badge-warning';
+        passBadge.textContent = 'Not Set';
+      }
+      if (passInput && !passInput.value) {
+        passInput.placeholder = 'Enter your Titan mailbox password';
+      }
+    }
+
     document.getElementById('setting-test-email').value = s.testEmail || 'contact@vyvhr.com';
     document.getElementById('setting-apify-token').value = s.apifyToken || '';
     document.getElementById('setting-niche').value = s.niche || '';
@@ -148,12 +174,30 @@ document.getElementById('btn-save-settings').addEventListener('click', async () 
   }
 });
 
+// Show / Hide Password Toggle
+const toggleBtn = document.getElementById('btn-toggle-password');
+if (toggleBtn) {
+  toggleBtn.addEventListener('click', () => {
+    const passInput = document.getElementById('setting-titan-password');
+    if (passInput.type === 'password') {
+      passInput.type = 'text';
+      toggleBtn.textContent = 'Hide';
+    } else {
+      passInput.type = 'password';
+      toggleBtn.textContent = 'Show';
+    }
+  });
+}
+
 // 3. Test Email Verification
 async function triggerTestEmail(recipient) {
   const titanEmail = (document.getElementById('setting-titan-email').value || '').trim();
   const titanPassword = (document.getElementById('setting-titan-password').value || '').trim();
 
-  if (!titanPassword) {
+  const passBadge = document.getElementById('password-status-badge');
+  const isAlreadySaved = passBadge && passBadge.textContent.includes('Saved');
+
+  if (!titanPassword && !isAlreadySaved) {
     showToast("Please enter your Titan Email Password before testing.", "error");
     return;
   }
