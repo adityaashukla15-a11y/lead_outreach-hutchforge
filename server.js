@@ -129,8 +129,8 @@ app.post('/api/test-email', async (req, res) => {
   };
 
   try {
-    const transporter = createTitanTransporter(titanEmail, titanPassword);
-    const result = await sendOutreachEmail({
+    let transporter = createTitanTransporter(titanEmail, titanPassword, 587);
+    let result = await sendOutreachEmail({
       transporter,
       fromEmail: titanEmail,
       senderName: db.settings.senderName || "Team Hutchforge",
@@ -139,6 +139,21 @@ app.post('/api/test-email', async (req, res) => {
       templateBody: db.template.body,
       dryRun: false
     });
+
+    // If port 587 fails with timeout, auto-fallback to port 465
+    if (!result.success && result.error && result.error.toLowerCase().includes('timeout')) {
+      addLog("Port 587 timed out, retrying on port 465...", "WARNING");
+      transporter = createTitanTransporter(titanEmail, titanPassword, 465);
+      result = await sendOutreachEmail({
+        transporter,
+        fromEmail: titanEmail,
+        senderName: db.settings.senderName || "Team Hutchforge",
+        lead: testLead,
+        templateSubject: db.template.subject,
+        templateBody: db.template.body,
+        dryRun: false
+      });
+    }
 
     if (result.success) {
       addLog(`Test email delivered to ${targetEmail}!`, "SUCCESS");

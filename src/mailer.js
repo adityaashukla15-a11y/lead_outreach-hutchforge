@@ -2,19 +2,24 @@ import nodemailer from 'nodemailer';
 
 /**
  * Creates the Titan SMTP transporter
+ * Uses Port 587 (STARTTLS) by default as required by cloud platforms like Render
  */
-export function createTitanTransporter(user, pass) {
+export function createTitanTransporter(user, pass, port = 587) {
   return nodemailer.createTransport({
     host: 'smtp.titan.email',
-    port: 465,
-    secure: true, // SSL
+    port: port,
+    secure: port === 465,
+    requireTLS: port === 587,
     auth: {
       user: user.trim(),
       pass: pass.trim()
     },
     tls: {
-      rejectUnauthorized: true
-    }
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000
   });
 }
 
