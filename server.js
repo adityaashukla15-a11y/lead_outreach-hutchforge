@@ -103,25 +103,36 @@ app.post('/api/test-email', async (req, res) => {
   const db = readDb();
   const targetEmail = (req.body.recipient || db.settings.testEmail || "contact@vyvhr.com").trim();
 
-  if (!db.settings.titanEmail || !db.settings.titanPassword) {
-    return res.status(400).json({ success: false, error: "Please enter your Titan Email and Password in Settings first." });
+  const titanEmail = (req.body.titanEmail || db.settings.titanEmail || '').trim();
+  let titanPassword = req.body.titanPassword;
+  if (!titanPassword || titanPassword === "••••••••") {
+    titanPassword = db.settings.titanPassword;
+  }
+
+  // Auto-save provided credentials
+  if (req.body.titanEmail) db.settings.titanEmail = titanEmail;
+  if (req.body.titanPassword && req.body.titanPassword !== "••••••••") db.settings.titanPassword = titanPassword;
+  writeDb(db);
+
+  if (!titanEmail || !titanPassword) {
+    return res.status(400).json({ success: false, error: "Please enter your Titan Email and Password first." });
   }
 
   addLog(`Sending test verification email to ${targetEmail}...`, "INFO");
 
   const testLead = {
     name: "Sample Construction & Builders",
-    city: db.settings.location.split(',')[0].trim() || "Dallas",
+    city: (db.settings.location || "Dallas, TX").split(',')[0].trim(),
     email: targetEmail,
     phone: "+1 (555) 019-2834"
   };
 
   try {
-    const transporter = createTitanTransporter(db.settings.titanEmail, db.settings.titanPassword);
+    const transporter = createTitanTransporter(titanEmail, titanPassword);
     const result = await sendOutreachEmail({
       transporter,
-      fromEmail: db.settings.titanEmail,
-      senderName: db.settings.senderName,
+      fromEmail: titanEmail,
+      senderName: db.settings.senderName || "Team Hutchforge",
       lead: testLead,
       templateSubject: db.template.subject,
       templateBody: db.template.body,
@@ -136,6 +147,7 @@ app.post('/api/test-email', async (req, res) => {
       res.status(500).json({ success: false, error: result.error });
     }
   } catch (err) {
+    addLog(`Test email exception: ${err.message}`, "ERROR");
     res.status(500).json({ success: false, error: err.message });
   }
 });

@@ -150,16 +150,25 @@ document.getElementById('btn-save-settings').addEventListener('click', async () 
 
 // 3. Test Email Verification
 async function triggerTestEmail(recipient) {
-  showToast(`Sending test email to ${recipient}...`, "info");
+  const titanEmail = (document.getElementById('setting-titan-email').value || '').trim();
+  const titanPassword = (document.getElementById('setting-titan-password').value || '').trim();
+
+  if (!titanPassword) {
+    showToast("Please enter your Titan Email Password before testing.", "error");
+    return;
+  }
+
+  showToast(`Connecting to Titan SMTP and sending test to ${recipient}...`, "info");
   try {
     const res = await fetch('/api/test-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipient })
+      body: JSON.stringify({ recipient, titanEmail, titanPassword })
     });
     const result = await res.json();
     if (result.success) {
       showToast(result.message, "success");
+      loadSettings();
     } else {
       showToast(`Test failed: ${result.error}`, "error");
     }
