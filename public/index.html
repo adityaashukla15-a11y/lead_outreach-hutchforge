@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hutchforge | Lead Outreach & Automation Platform</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">H</div>
+        <div class="brand-info">
+          <h2>Hutchforge</h2>
+          <span>Outreach Hub</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="dashboard">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </button>
+        <button class="nav-item" data-tab="leads">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          Leads (<span id="sidebar-lead-count">0</span>)
+        </button>
+        <button class="nav-item" data-tab="template">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          Email Template
+        </button>
+        <button class="nav-item" data-tab="settings">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Titan & Scraping Settings
+        </button>
+        <button class="nav-item" data-tab="logs">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Activity Logs
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="scheduler-pill" id="scheduler-pill">
+          <span class="dot"></span>
+          <span id="scheduler-pill-text">Scheduler: Loading...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Alert Banner -->
+      <div id="toast-banner" class="toast-banner hidden"></div>
+
+      <!-- Tab 1: Dashboard -->
+      <section id="tab-dashboard" class="tab-pane active">
+        <header class="section-header">
+          <div>
+            <h1>Automation Dashboard</h1>
+            <p>Monitor your scraping pipeline, Titan email delivery, and automated outreach schedule.</p>
+          </div>
+          <div class="action-buttons">
+            <button class="btn btn-secondary" id="btn-quick-scrape">Scrape Now</button>
+            <button class="btn btn-secondary" id="btn-quick-send">Send Pending</button>
+            <button class="btn btn-primary" id="btn-quick-full">Run Full Cycle (Scrape & Send)</button>
+          </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Total Discovered Leads</span>
+            <div class="stat-value" id="stat-total-leads">0</div>
+            <span class="stat-sub">From Google Maps & Directories</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">New / Pending to Email</span>
+            <div class="stat-value text-blue" id="stat-new-leads">0</div>
+            <span class="stat-sub">Ready for outreach</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Emails Delivered</span>
+            <div class="stat-value text-green" id="stat-sent-leads">0</div>
+            <span class="stat-sub">Sent from hello@hutchforge.in</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Failed Deliveries</span>
+            <div class="stat-value text-red" id="stat-failed-leads">0</div>
+            <span class="stat-sub">Bounced or bad addresses</span>
+          </div>
+        </div>
+
+        <!-- Quick Info Cards -->
+        <div class="cards-grid">
+          <div class="card">
+            <h3>Targeting Criteria</h3>
+            <div class="info-list">
+              <div class="info-item"><span>Target Niche:</span> <strong id="dash-niche">Builders & Construction Contractors</strong></div>
+              <div class="info-item"><span>Target Location:</span> <strong id="dash-location">Dallas, TX</strong></div>
+              <div class="info-item"><span>Filter:</span> <strong class="badge badge-success" id="dash-filter">Only without websites</strong></div>
+              <div class="info-item"><span>Batch Size:</span> <strong id="dash-batch">20 emails/run</strong></div>
+            </div>
+            <button class="btn btn-outline" style="margin-top: 14px;" data-tab-link="settings">Edit Targeting Settings &rarr;</button>
+          </div>
+
+          <div class="card">
+            <h3>Titan Mail Connection</h3>
+            <div class="info-list">
+              <div class="info-item"><span>Account:</span> <strong id="dash-email">hello@hutchforge.in</strong></div>
+              <div class="info-item"><span>Host:</span> <strong>smtp.titan.email (Port 465 SSL)</strong></div>
+              <div class="info-item"><span>Status:</span> <span id="dash-smtp-status" class="badge badge-warning">Checking...</span></div>
+            </div>
+            <div style="margin-top: 14px; display: flex; gap: 8px;">
+              <button class="btn btn-primary" id="btn-dash-test-email">Send Test Email to contact@vyvhr.com</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Logs on Dashboard -->
+        <div class="card" style="margin-top: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3>Live Activity Feed</h3>
+            <button class="btn btn-outline btn-sm" id="btn-refresh-logs">Refresh Feed</button>
+          </div>
+          <div class="logs-feed" id="dashboard-logs">Loading logs...</div>
+        </div>
+      </section>
+
+      <!-- Tab 2: Leads Management -->
+      <section id="tab-leads" class="tab-pane">
+        <header class="section-header">
+          <div>
+            <h1>Scraped Leads Directory</h1>
+            <p>Review discovered construction businesses and control individual or batch emailing.</p>
+          </div>
+          <div class="action-buttons">
+            <button class="btn btn-secondary" id="btn-export-csv">Export to CSV</button>
+            <button class="btn btn-secondary" id="btn-clear-leads">Clear All</button>
+            <button class="btn btn-primary" id="btn-send-selected">Send to Selected</button>
+          </div>
+        </header>
+
+        <div class="card table-card">
+          <div class="table-controls">
+            <input type="text" id="lead-search" placeholder="Search by company, city, or email..." class="input-control" style="max-width: 350px;">
+            <div class="filter-group">
+              <label>Filter Status:</label>
+              <select id="lead-filter-status" class="input-control" style="width: 140px;">
+                <option value="ALL">All Leads</option>
+                <option value="NEW">New (Pending)</option>
+                <option value="SENT">Sent</option>
+                <option value="FAILED">Failed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="leads-table">
+              <thead>
+                <tr>
+                  <th width="40"><input type="checkbox" id="select-all-leads"></th>
+                  <th>Business Name</th>
+                  <th>City</th>
+                  <th>Contact Email</th>
+                  <th>Phone</th>
+                  <th>Website Status</th>
+                  <th>Outreach Status</th>
+                  <th width="100">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="leads-table-body">
+                <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading leads...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 3: Email Template Editor -->
+      <section id="tab-template" class="tab-pane">
+        <header class="section-header">
+          <div>
+            <h1>Outreach Template Editor</h1>
+            <p>Customize your pitch message. Variables are replaced automatically for every builder.</p>
+          </div>
+          <button class="btn btn-primary" id="btn-save-template">Save Template</button>
+        </header>
+
+        <div class="template-layout">
+          <!-- Editor Form -->
+          <div class="card">
+            <h3>Edit Message</h3>
+            
+            <div class="form-group">
+              <label>Available Dynamic Variables (Click to copy/insert):</label>
+              <div class="tag-chips">
+                <span class="chip" onclick="insertTag('{business_name}')">{business_name}</span>
+                <span class="chip" onclick="insertTag('{city}')">{city}</span>
+                <span class="chip" onclick="insertTag('{phone}')">{phone}</span>
+                <span class="chip" onclick="insertTag('{email}')">{email}</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="template-subject">Email Subject Line:</label>
+              <input type="text" id="template-subject" class="input-control" placeholder="Subject line with variables...">
+            </div>
+
+            <div class="form-group">
+              <label for="template-body">Email Body (Plain Text / Paragraphs):</label>
+              <textarea id="template-body" class="input-control text-area" rows="16"></textarea>
+            </div>
+          </div>
+
+          <!-- Live Preview Card -->
+          <div class="card preview-card">
+            <h3>Live Preview (Client View)</h3>
+            <p class="preview-sub">Simulating email for: <strong>Apex Builders in Dallas, TX</strong></p>
+
+            <div class="email-mockup">
+              <div class="email-mockup-header">
+                <div><strong>From:</strong> Team Hutchforge &lt;hello@hutchforge.in&gt;</div>
+                <div><strong>To:</strong> contact@apexbuilders.example</div>
+                <div><strong>Subject:</strong> <span id="preview-subject" class="preview-subject-text">...</span></div>
+              </div>
+              <div class="email-mockup-body" id="preview-body">
+                ...
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 4: Titan Mail & Scraper Settings -->
+      <section id="tab-settings" class="tab-pane">
+        <header class="section-header">
+          <div>
+            <h1>Platform Settings</h1>
+            <p>Configure your Titan Email credentials, Apify scraping preferences, and automated scheduler.</p>
+          </div>
+          <button class="btn btn-primary" id="btn-save-settings">Save All Settings</button>
+        </header>
+
+        <div class="settings-grid">
+          <!-- Card 1: Titan Mail -->
+          <div class="card">
+            <h3>Titan Email (GoDaddy) Configuration</h3>
+            <p class="card-desc">Used to send emails securely via Titan's official SMTP host.</p>
+
+            <div class="form-group">
+              <label>Sender Display Name:</label>
+              <input type="text" id="setting-sender-name" class="input-control" placeholder="e.g. Team Hutchforge">
+            </div>
+
+            <div class="form-group">
+              <label>Titan Email Address:</label>
+              <input type="email" id="setting-titan-email" class="input-control" placeholder="hello@hutchforge.in">
+            </div>
+
+            <div class="form-group">
+              <label>Titan Password:</label>
+              <input type="password" id="setting-titan-password" class="input-control" placeholder="Enter your mailbox password">
+              <small class="field-hint">Never exposed publicly. Kept secure on your private server.</small>
+            </div>
+
+            <div class="form-group" style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);">
+              <label>Quick Verification Test Recipient:</label>
+              <div style="display: flex; gap: 8px;">
+                <input type="email" id="setting-test-email" class="input-control" value="contact@vyvhr.com">
+                <button class="btn btn-secondary" id="btn-send-test-setting" style="white-space: nowrap;">Send Test</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Apify Scraper -->
+          <div class="card">
+            <h3>Apify Lead Scraper</h3>
+            <p class="card-desc">Extracts local contractors and identifies businesses without websites.</p>
+
+            <div class="form-group">
+              <label>Apify API Token:</label>
+              <input type="password" id="setting-apify-token" class="input-control" placeholder="apify_api_...">
+              <small class="field-hint">Your Apify free tier $5 credit token from console.apify.com</small>
+            </div>
+
+            <div class="form-group">
+              <label>Target Niche / Industry:</label>
+              <input type="text" id="setting-niche" class="input-control" placeholder="e.g. Builders & Construction Contractors">
+            </div>
+
+            <div class="form-group">
+              <label>Target US Location (City, State):</label>
+              <input type="text" id="setting-location" class="input-control" placeholder="e.g. Dallas, TX or Miami, FL">
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="setting-only-without-websites">
+                <span><strong>Only target businesses without websites</strong> (or social-only links)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Card 3: Scheduler & Delays -->
+          <div class="card" style="grid-column: 1 / -1;">
+            <h3>Automated Schedule & Anti-Spam Safety</h3>
+            <p class="card-desc">Configure automated execution timelines and human-like delivery pacing.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+              <div class="form-group">
+                <label class="checkbox-label" style="margin-top: 28px;">
+                  <input type="checkbox" id="setting-autorun">
+                  <span><strong>Enable Automated Daily Run</strong></span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label>Daily Trigger Time (Server Time / 24h):</label>
+                <input type="time" id="setting-schedule-time" class="input-control" value="09:00">
+              </div>
+
+              <div class="form-group">
+                <label>Active Days:</label>
+                <select id="setting-schedule-days" class="input-control">
+                  <option value="weekdays">Monday to Friday (Recommended)</option>
+                  <option value="everyday">Every Day (7 Days a week)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Batch Size per Run:</label>
+                <input type="number" id="setting-batch-size" class="input-control" value="20" min="1" max="100">
+              </div>
+
+              <div class="form-group">
+                <label>Delay Between Emails (Seconds):</label>
+                <input type="number" id="setting-delay-seconds" class="input-control" value="45" min="20" max="300">
+                <small class="field-hint">45s keeps Titan mailbox completely safe.</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 5: Activity Logs -->
+      <section id="tab-logs" class="tab-pane">
+        <header class="section-header">
+          <div>
+            <h1>Activity & System Logs</h1>
+            <p>Real-time log of scraping cycles, lead discoveries, and email delivery receipts.</p>
+          </div>
+          <button class="btn btn-secondary" id="btn-refresh-all-logs">Refresh Logs</button>
+        </header>
+
+        <div class="card">
+          <div class="logs-feed logs-feed-full" id="full-logs">Loading logs...</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

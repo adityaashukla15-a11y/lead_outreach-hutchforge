@@ -1,15 +1,11 @@
 import { ApifyClient } from 'apify-client';
 
-/**
- * Validates whether an email is clean and personal (not a spam trap or generic unmonitored bounce)
- */
 function isValidEmail(email) {
   if (!email || typeof email !== 'string') return false;
   const cleaned = email.trim().toLowerCase();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(cleaned)) return false;
 
-  // Filter out system and platform noise
   const badPatterns = [
     'wixpress', 'sentry', 'example.com', 'domain.com',
     'noreply', 'no-reply', 'mailer-daemon', 'donotreply', 'support@google.com'
@@ -17,9 +13,6 @@ function isValidEmail(email) {
   return !badPatterns.some(bad => cleaned.includes(bad));
 }
 
-/**
- * Extracts emails from string or array fields
- */
 function extractEmails(item) {
   const found = new Set();
   
@@ -37,7 +30,6 @@ function extractEmails(item) {
     });
   }
 
-  // Check additional text fields or social profiles for emails (small builders often put email in description)
   const textBlob = `${item.description || ''} ${item.additionalInfo || ''} ${item.address || ''}`;
   const regexMatches = textBlob.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
   if (regexMatches) {
@@ -49,84 +41,63 @@ function extractEmails(item) {
   return Array.from(found);
 }
 
-/**
- * Scrapes businesses via Apify Google Maps actor
- */
-export async function scrapeLeadsWithApify(apiToken, searchTerms, location, maxResults = 30) {
-  const client = new ApifyClient({ token: apiToken });
+export async function scrapeLeads({
+  apifyToken,
+  niche = "Builders & Construction Contractors",
+  location = "Dallas, TX",
+  maxResults = 20,
+  onlyWithoutWebsites = true
+}) {
+  if (!apifyToken) {
+    throw new Error("Apify API Token is required to scrape live Google Maps data. Please set your token in Settings.");
+  }
 
-  console.log(`[Scraper] Searching for "${searchTerms}" in "${location}" via Apify...`);
+  const client = new ApifyClient({ token: apifyToken.trim() });
+  const searchQuery = `${niche} in ${location}`;
 
-  // We use compass/crawler-google-places actor (one of the most popular and cost-effective)
-  // or fallback to lukas/google-maps-contact-details
   const runInput = {
-    searchStringsArray: [`${searchTerms} in ${location}`],
-    maxCrawledPlacesPerSearch: Math.min(maxResults * 3, 100),
+    searchStringsArray: [searchQuery],
+    maxCrawledPlacesPerSearch: Math.min(maxResults * 4, 120),
     language: 'en',
     scrapeContactDetails: true,
     scrapeReviewerName: false,
     scrapeReviews: false
   };
 
-  try {
-    const run = await client.actor('compass/crawler-google-places').call(runInput);
-    const { items } = await client.dataset(run.defaultDatasetId).listItems();
+  const run = await client.actor('compass/crawler-google-places').call(runInput);
+  const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
-    console.log(`[Scraper] Total raw places fetched: ${items.length}`);
+  const leads = [];
 
-    const filteredLeads = [];
+  for (const item of items) {
+    const rawWebsite = (item.website || '').toLowerCase().trim();
+    const hasNoOfficialWebsite = !rawWebsite || 
+      rawWebsite.includes('facebook.com') || 
+      rawWebsite.includes('instagram.com') ||
+      rawWebsite.includes('google.com') ||
+      rawWebsite.includes('business.site') ||
+      rawWebsite.includes('yelp.com');
 
-    for (const item of items) {
-      const hasNoOfficialWebsite = !item.website || 
-        item.website.includes('facebook.com') || 
-        item.website.includes('instagram.com') ||
-        item.website.includes('google.com');
-
-      if (!hasNoOfficialWebsite) {
-        // Skip businesses that already have their own custom domain website
-        continue;
-      }
-
-      const emails = extractEmails(item);
-      if (emails.length > 0) {
-        filteredLeads.push({
-          name: item.title || item.name || 'Business Owner',
-          city: item.city || location.split(',')[0].trim(),
-          email: emails[0],
-          phone: item.phone || item.phoneUnformatted || 'N/A',
-          website: item.website || 'None'
-        });
-      }
-
-      if (filteredLeads.length >= maxResults) break;
+    if (onlyWithoutWebsites && !hasNoOfficialWebsite) {
+      continue;
     }
 
-    return filteredLeads;
-  } catch (error) {
-    console.error(`[Scraper] Apify call failed: ${error.message}`);
-    return [];
+    const emails = extractEmails(item);
+    if (emails.length > 0) {
+      leads.push({
+        id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        name: item.title || item.name || 'Local Builder',
+        city: item.city || location.split(',')[0].trim(),
+        email: emails[0],
+        phone: item.phone || item.phoneUnformatted || 'N/A',
+        website: item.website || 'None',
+        status: 'NEW',
+        discoveredAt: new Date().toISOString()
+      });
+    }
+
+    if (leads.length >= maxResults) break;
   }
-}
 
-/**
- * Fallback mock generator / directory scraper when Apify token is not provided
- */
-export async function getMockOrFallbackLeads(location, maxResults = 5) {
-  console.log(`[Scraper] Running in fallback mode for ${location}...`);
-  return [
-    {
-      name: 'Lone Star Custom Builders',
-      city: location.split(',')[0].trim() || 'Dallas',
-      email: 'contact@lonestarcustombuilders.example',
-      phone: '(214) 555-0182',
-      website: 'None'
-    },
-    {
-      name: 'Apex Residential Remodeling',
-      city: location.split(',')[0].trim() || 'Dallas',
-      email: 'info@apexremodelingtx.example',
-      phone: '(214) 555-0199',
-      website: 'None'
-    }
-  ].slice(0, maxResults);
+  return leads;
 }
