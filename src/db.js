@@ -31,6 +31,7 @@ If you'd prefer not to hear from us, just reply with "unsubscribe" and we won't 
 };
 
 const DEFAULT_SETTINGS = {
+  resendApiKey: process.env.RESEND_API_KEY || "",
   apifyToken: process.env.APIFY_TOKEN || "",
   titanEmail: process.env.TITAN_EMAIL || "hello@hutchforge.in",
   titanPassword: process.env.TITAN_PASSWORD || "",

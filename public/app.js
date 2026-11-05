@@ -79,6 +79,8 @@ async function loadSettings() {
     const s = await res.json();
 
     // Fill form
+    const resendInput = document.getElementById('setting-resend-api-key');
+    if (resendInput) resendInput.value = s.resendApiKey || '';
     document.getElementById('setting-sender-name').value = s.senderName || 'Team Hutchforge';
     document.getElementById('setting-titan-email').value = s.titanEmail || 'hello@hutchforge.in';
     const hostEl = document.getElementById('setting-smtp-host');
@@ -146,6 +148,7 @@ async function loadSettings() {
 // Save Settings
 document.getElementById('btn-save-settings').addEventListener('click', async () => {
   const payload = {
+    resendApiKey: document.getElementById('setting-resend-api-key') ? document.getElementById('setting-resend-api-key').value : '',
     senderName: document.getElementById('setting-sender-name').value,
     titanEmail: document.getElementById('setting-titan-email').value,
     smtpHost: (document.getElementById('setting-smtp-host') ? document.getElementById('setting-smtp-host').value : 'smtp.titan.email'),
@@ -197,23 +200,24 @@ if (toggleBtn) {
 
 // 3. Test Email Verification
 async function triggerTestEmail(recipient) {
+  const resendApiKey = (document.getElementById('setting-resend-api-key') ? document.getElementById('setting-resend-api-key').value : '').trim();
   const titanEmail = (document.getElementById('setting-titan-email').value || '').trim();
   const titanPassword = (document.getElementById('setting-titan-password').value || '').trim();
 
   const passBadge = document.getElementById('password-status-badge');
   const isAlreadySaved = passBadge && passBadge.textContent.includes('Saved');
 
-  if (!titanPassword && !isAlreadySaved) {
-    showToast("Please enter your Titan Email Password before testing.", "error");
+  if (!resendApiKey && !titanPassword && !isAlreadySaved) {
+    showToast("Please enter either a Resend API Key or Titan Password before testing.", "error");
     return;
   }
 
-  showToast(`Connecting to Titan SMTP and sending test to ${recipient}...`, "info");
+  showToast(`Dispatching test verification email to ${recipient}...`, "info");
   try {
     const res = await fetch('/api/test-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipient, titanEmail, titanPassword })
+      body: JSON.stringify({ recipient, resendApiKey, titanEmail, titanPassword })
     });
     const result = await res.json();
     if (result.success) {

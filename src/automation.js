@@ -59,10 +59,10 @@ export async function runOutreachCycle({ manual = false, scrapeOnly = false, sen
     }
 
     // 2. Email Sending Step
-    if (!settings.titanEmail || !settings.titanPassword) {
-      addLog("Email sending skipped: Titan Email or Password not configured.", "WARNING");
+    if (!settings.resendApiKey && (!settings.titanEmail || !settings.titanPassword)) {
+      addLog("Email sending skipped: Please configure Resend API Key or Titan Email & Password in Settings.", "WARNING");
       isCycleRunning = false;
-      return { success: true, message: "Leads scraped, but email sending skipped (Titan credentials missing)." };
+      return { success: true, message: "Leads scraped, but email sending skipped (Sender credentials missing)." };
     }
 
     const pendingLeads = db.leads.filter(l => l.status === 'NEW').slice(0, settings.batchSize || 20);
@@ -76,7 +76,9 @@ export async function runOutreachCycle({ manual = false, scrapeOnly = false, sen
     addLog(`Preparing to email ${pendingLeads.length} leads with ${settings.delaySeconds || 40}s delay...`, "INFO");
     const host = settings.smtpHost || 'smtp.titan.email';
     const port = parseInt(settings.smtpPort || '587', 10);
-    const transporter = createTitanTransporter(settings.titanEmail, settings.titanPassword, port, host);
+    const transporter = (!settings.resendApiKey && settings.titanPassword) 
+      ? createTitanTransporter(settings.titanEmail, settings.titanPassword, port, host) 
+      : null;
 
     let sentCount = 0;
     for (let i = 0; i < pendingLeads.length; i++) {
@@ -85,6 +87,7 @@ export async function runOutreachCycle({ manual = false, scrapeOnly = false, sen
 
       const res = await sendOutreachEmail({
         transporter,
+        resendApiKey: settings.resendApiKey,
         fromEmail: settings.titanEmail,
         senderName: settings.senderName,
         lead,

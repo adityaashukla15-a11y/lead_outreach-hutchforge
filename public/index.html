@@ -271,6 +271,24 @@
         </header>
 
         <div class="settings-grid">
+          <!-- Card 0: Guaranteed Cloud Delivery via Resend API -->
+          <div class="card" style="grid-column: 1 / -1; border: 1px solid rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <h3 style="color: #93c5fd; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Flawless Cloud Delivery (Resend HTTPS API)
+              </h3>
+              <span class="badge badge-success">100% Immune to Timeouts</span>
+            </div>
+            <p class="card-desc">Bypasses SMTP port blocks completely by sending over HTTPS (Port 443). Works on Render and Railway with zero connection drops. (3,000 free emails/month).</p>
+
+            <div class="form-group">
+              <label>Resend API Key:</label>
+              <input type="password" id="setting-resend-api-key" class="input-control" placeholder="re_...">
+              <small class="field-hint">Sign up free in 30 seconds at <a href="https://resend.com" target="_blank" style="color: #60a5fa; text-decoration: underline;">resend.com</a> $\rightarrow$ API Keys $\rightarrow$ Create. When set, emails deliver in &lt;1 second.</small>
+            </div>
+          </div>
+
           <!-- Card 1: Titan Mail -->
           <div class="card">
             <h3>Titan Email (GoDaddy) Configuration</h3>

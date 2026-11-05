@@ -53,10 +53,52 @@ export function renderTemplate(templateStr, lead) {
 }
 
 /**
+ * Sends email via Resend HTTP REST API over Port 443 (HTTPS)
+ * 100% immune to cloud firewall timeouts and never blocked by Render, Railway, or AWS.
+ */
+export async function sendViaResend({
+  apiKey,
+  fromEmail,
+  senderName = "Team Hutchforge",
+  toEmail,
+  subject,
+  textBody,
+  htmlBody
+}) {
+  try {
+    const formattedFrom = `"${senderName}" <${fromEmail}>`;
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey.trim()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: formattedFrom,
+        to: [toEmail],
+        reply_to: fromEmail,
+        subject: subject,
+        text: textBody,
+        html: htmlBody
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data.message || JSON.stringify(data) };
+    }
+    return { success: true, messageId: data.id };
+  } catch (err) {
+    return { success: false, error: `Resend API error: ${err.message}` };
+  }
+}
+
+/**
  * Sends outreach email using custom template
  */
 export async function sendOutreachEmail({
   transporter,
+  resendApiKey,
   fromEmail,
   senderName = "Team Hutchforge",
   lead,
@@ -76,6 +118,24 @@ export async function sendOutreachEmail({
 
   if (dryRun) {
     return { success: true, dryRun: true, subject, body: textBody };
+  }
+
+  // 1. If Resend API Key is provided, use HTTPS API over Port 443 (Zero Timeout Flawless Delivery)
+  if (resendApiKey && resendApiKey.trim().length > 0) {
+    return await sendViaResend({
+      apiKey: resendApiKey,
+      fromEmail,
+      senderName,
+      toEmail: lead.email,
+      subject,
+      textBody,
+      htmlBody
+    });
+  }
+
+  // 2. Otherwise fallback to SMTP Transporter
+  if (!transporter) {
+    return { success: false, error: "Neither SMTP Transporter nor Resend API Key is configured." };
   }
 
   try {

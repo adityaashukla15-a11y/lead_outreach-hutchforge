@@ -104,19 +104,21 @@ app.post('/api/test-email', async (req, res) => {
   const db = readDb();
   const targetEmail = (req.body.recipient || db.settings.testEmail || "contact@vyvhr.com").trim();
 
-  const titanEmail = (req.body.titanEmail || db.settings.titanEmail || '').trim();
+  const titanEmail = (req.body.titanEmail || db.settings.titanEmail || 'hello@hutchforge.in').trim();
   let titanPassword = req.body.titanPassword;
   if (!titanPassword || titanPassword === "••••••••") {
     titanPassword = db.settings.titanPassword;
   }
+  const resendApiKey = (req.body.resendApiKey || db.settings.resendApiKey || '').trim();
 
   // Auto-save provided credentials
   if (req.body.titanEmail) db.settings.titanEmail = titanEmail;
   if (req.body.titanPassword && req.body.titanPassword !== "••••••••") db.settings.titanPassword = titanPassword;
+  if (req.body.resendApiKey) db.settings.resendApiKey = resendApiKey;
   writeDb(db);
 
-  if (!titanEmail || !titanPassword) {
-    return res.status(400).json({ success: false, error: "Please enter your Titan Email and Password first." });
+  if (!resendApiKey && (!titanEmail || !titanPassword)) {
+    return res.status(400).json({ success: false, error: "Please configure either a Resend API Key or Titan Email & Password." });
   }
 
   addLog(`Sending test verification email to ${targetEmail}...`, "INFO");
@@ -132,9 +134,14 @@ app.post('/api/test-email', async (req, res) => {
   const port = parseInt(db.settings.smtpPort || '587', 10);
 
   try {
-    let transporter = createTitanTransporter(titanEmail, titanPassword, port, host);
+    let transporter = null;
+    if (!resendApiKey && titanPassword) {
+      transporter = createTitanTransporter(titanEmail, titanPassword, port, host);
+    }
+
     let result = await sendOutreachEmail({
       transporter,
+      resendApiKey,
       fromEmail: titanEmail,
       senderName: db.settings.senderName || "Team Hutchforge",
       lead: testLead,
@@ -143,8 +150,8 @@ app.post('/api/test-email', async (req, res) => {
       dryRun: false
     });
 
-    // If initial port fails with timeout, auto-fallback to alternative port (465 <-> 587)
-    if (!result.success && result.error && result.error.toLowerCase().includes('timeout')) {
+    // If initial SMTP port fails with timeout, auto-fallback to alternative port (465 <-> 587)
+    if (!result.success && !resendApiKey && result.error && result.error.toLowerCase().includes('timeout')) {
       const fallbackPort = port === 587 ? 465 : 587;
       addLog(`Port ${port} timed out, retrying on port ${fallbackPort}...`, "WARNING");
       transporter = createTitanTransporter(titanEmail, titanPassword, fallbackPort, host);
