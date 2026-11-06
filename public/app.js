@@ -72,15 +72,31 @@ async function loadStatus() {
   }
 }
 
-// 2. Fetch & Render Settings
+// 2. Fetch & Render Settings (with permanent localStorage backup)
 async function loadSettings() {
   try {
     const res = await fetch('/api/settings');
-    const s = await res.json();
+    let s = await res.json();
+
+    // Check localStorage cache for backup recovery across server sleep/redeploy
+    const cached = JSON.parse(localStorage.getItem('hutchforge_credentials') || '{}');
+
+    // Restore from localStorage if server has empty values
+    if (!s.resendApiKey && cached.resendApiKey) s.resendApiKey = cached.resendApiKey;
+    if (!s.titanPassword && cached.titanPassword) s.titanPassword = cached.titanPassword;
+    if (!s.apifyToken && cached.apifyToken) s.apifyToken = cached.apifyToken;
+    if (!s.titanEmail && cached.titanEmail) s.titanEmail = cached.titanEmail;
 
     // Fill form
     const resendInput = document.getElementById('setting-resend-api-key');
     if (resendInput) resendInput.value = s.resendApiKey || '';
+
+    const apifyInput = document.getElementById('setting-apify-token');
+    if (apifyInput) apifyInput.value = s.apifyToken || '';
+
+    const passInput = document.getElementById('setting-titan-password');
+    if (passInput) passInput.value = s.titanPassword || '';
+
     document.getElementById('setting-sender-name').value = s.senderName || 'Team Hutchforge';
     document.getElementById('setting-titan-email').value = s.titanEmail || 'hello@hutchforge.in';
     const hostEl = document.getElementById('setting-smtp-host');
@@ -88,34 +104,26 @@ async function loadSettings() {
     const portEl = document.getElementById('setting-smtp-port');
     if (portEl) portEl.value = s.smtpPort ? s.smtpPort.toString() : '587';
     
-    // Only update password placeholder/badge, NEVER touch what user is typing
-    const passInput = document.getElementById('setting-titan-password');
+    // Status badge update
     const passBadge = document.getElementById('password-status-badge');
     const passHint = document.getElementById('password-hint');
 
-    if (s.hasPassword) {
+    if (s.titanPassword || s.hasPassword) {
       if (passBadge) {
         passBadge.className = 'badge badge-success';
         passBadge.textContent = 'Saved in Storage';
       }
-      if (passInput && !passInput.value) {
-        passInput.placeholder = 'Password saved. (Type only to replace)';
-      }
       if (passHint) {
-        passHint.textContent = 'Your Titan mailbox password is saved and active on your server.';
+        passHint.textContent = 'Your Titan mailbox password is saved permanently.';
       }
     } else {
       if (passBadge) {
         passBadge.className = 'badge badge-warning';
         passBadge.textContent = 'Not Set';
       }
-      if (passInput && !passInput.value) {
-        passInput.placeholder = 'Enter your Titan mailbox password';
-      }
     }
 
     document.getElementById('setting-test-email').value = s.testEmail || 'contact@vyvhr.com';
-    document.getElementById('setting-apify-token').value = s.apifyToken || '';
     document.getElementById('setting-niche').value = s.niche || '';
     document.getElementById('setting-location').value = s.location || '';
     document.getElementById('setting-only-without-websites').checked = !!s.onlyWithoutWebsites;
@@ -133,12 +141,32 @@ async function loadSettings() {
     document.getElementById('dash-email').textContent = s.titanEmail || 'hello@hutchforge.in';
 
     const smtpStatus = document.getElementById('dash-smtp-status');
-    if (s.hasPassword) {
+    if (s.resendApiKey) {
+      smtpStatus.className = 'badge badge-success';
+      smtpStatus.textContent = 'Resend API Active';
+    } else if (s.hasPassword || s.titanPassword) {
       smtpStatus.className = 'badge badge-success';
       smtpStatus.textContent = 'Configured';
     } else {
       smtpStatus.className = 'badge badge-warning';
-      smtpStatus.textContent = 'Password Missing';
+      smtpStatus.textContent = 'Key Missing';
+    }
+
+    // Save updated credentials to localStorage as permanent backup
+    localStorage.setItem('hutchforge_credentials', JSON.stringify({
+      resendApiKey: s.resendApiKey || '',
+      apifyToken: s.apifyToken || '',
+      titanPassword: s.titanPassword || '',
+      titanEmail: s.titanEmail || ''
+    }));
+
+    // If server was missing values that we recovered from localStorage, sync them to server automatically
+    if ((cached.resendApiKey && !s.hasResendKey) || (cached.apifyToken && !s.hasApifyToken) || (cached.titanPassword && !s.hasPassword)) {
+      fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(s)
+      });
     }
   } catch (err) {
     console.error("Failed loading settings:", err);
@@ -148,14 +176,14 @@ async function loadSettings() {
 // Save Settings
 document.getElementById('btn-save-settings').addEventListener('click', async () => {
   const payload = {
-    resendApiKey: document.getElementById('setting-resend-api-key') ? document.getElementById('setting-resend-api-key').value : '',
+    resendApiKey: document.getElementById('setting-resend-api-key') ? document.getElementById('setting-resend-api-key').value.trim() : '',
     senderName: document.getElementById('setting-sender-name').value,
     titanEmail: document.getElementById('setting-titan-email').value,
     smtpHost: (document.getElementById('setting-smtp-host') ? document.getElementById('setting-smtp-host').value : 'smtp.titan.email'),
     smtpPort: parseInt((document.getElementById('setting-smtp-port') ? document.getElementById('setting-smtp-port').value : '587'), 10),
-    titanPassword: document.getElementById('setting-titan-password').value,
+    titanPassword: document.getElementById('setting-titan-password').value.trim(),
     testEmail: document.getElementById('setting-test-email').value,
-    apifyToken: document.getElementById('setting-apify-token').value,
+    apifyToken: document.getElementById('setting-apify-token').value.trim(),
     niche: document.getElementById('setting-niche').value,
     location: document.getElementById('setting-location').value,
     onlyWithoutWebsites: document.getElementById('setting-only-without-websites').checked,
@@ -166,6 +194,14 @@ document.getElementById('btn-save-settings').addEventListener('click', async () 
     delaySeconds: parseInt(document.getElementById('setting-delay-seconds').value, 10)
   };
 
+  // Save to browser localStorage immediately
+  localStorage.setItem('hutchforge_credentials', JSON.stringify({
+    resendApiKey: payload.resendApiKey,
+    apifyToken: payload.apifyToken,
+    titanPassword: payload.titanPassword,
+    titanEmail: payload.titanEmail
+  }));
+
   try {
     const res = await fetch('/api/settings', {
       method: 'POST',
@@ -174,7 +210,7 @@ document.getElementById('btn-save-settings').addEventListener('click', async () 
     });
     const result = await res.json();
     if (result.success) {
-      showToast("Settings successfully saved and scheduler updated!", "success");
+      showToast("All keys, passwords, and settings saved permanently!", "success");
       loadSettings();
       loadStatus();
     }

@@ -33,27 +33,32 @@ app.get('/api/status', (req, res) => {
 // 2. Settings Endpoints
 app.get('/api/settings', (req, res) => {
   const db = readDb();
-  const safeSettings = { ...db.settings };
-  safeSettings.hasPassword = !!(db.settings.titanPassword && db.settings.titanPassword.trim().length > 0);
-  // Never send fake bullet characters so the user's input is never modified or visually shortened
-  delete safeSettings.titanPassword;
-  res.json(safeSettings);
+  const settings = { ...db.settings };
+  settings.hasPassword = !!(db.settings.titanPassword && db.settings.titanPassword.trim().length > 0);
+  settings.hasResendKey = !!(db.settings.resendApiKey && db.settings.resendApiKey.trim().length > 0);
+  settings.hasApifyToken = !!(db.settings.apifyToken && db.settings.apifyToken.trim().length > 0);
+  res.json(settings);
 });
 
 app.post('/api/settings', (req, res) => {
   const db = readDb();
   const incoming = req.body;
 
-  // Only update password if user actually typed a new one
+  // Persist password and keys permanently
   if (incoming.titanPassword && incoming.titanPassword.trim().length > 0) {
     db.settings.titanPassword = incoming.titanPassword.trim();
   }
-  delete incoming.titanPassword;
+  if (incoming.resendApiKey && incoming.resendApiKey.trim().length > 0) {
+    db.settings.resendApiKey = incoming.resendApiKey.trim();
+  }
+  if (incoming.apifyToken && incoming.apifyToken.trim().length > 0) {
+    db.settings.apifyToken = incoming.apifyToken.trim();
+  }
 
   db.settings = { ...db.settings, ...incoming };
   writeDb(db);
   initScheduler(); // reload scheduler with new timings
-  addLog("Settings updated successfully.", "INFO");
+  addLog("All credentials and settings saved permanently.", "INFO");
   res.json({ success: true, settings: db.settings });
 });
 
